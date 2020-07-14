@@ -1,6 +1,6 @@
 # SISR
 Project is Single Image Super Resolution using Multi Image Feature Fusion.
-Multi-Image Feature Fusion Generative adversarial network(MFFGAN) was implemented.
+Multi-Image Feature Fusion Generative adversarial network(MFFGAN) is implemented.
 
 step 1: Create Training input folder and validation input folder which contains input images.
 step 2: Open command_page.ipynb file and run the commands one by one.
