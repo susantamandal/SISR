@@ -71,7 +71,7 @@ class MIFF:
 						print("Epoch: [{}/{}] step: [{}/{}] time: {:.3f}s, mse: {:.6f} ".format(
 						epoch+1+resume_epoch, resume_epoch+n_epoch_init, step+1, CONFIG.no_of_batches, time.time() - step_time, mse_loss))
 					
-					path = 'Training_Output/gan_init_{}_train_{}.png'.format(CONFIG.gen_model, epoch+1+resume_epoch)
+					path = 'Training_outputs/gan_init_{}_train_{}.png'.format(CONFIG.gen_model, epoch+1+resume_epoch)
 					tl.vis.save_images(cast_uint8(fake_patchs.numpy()), [2, CONFIG.batch_size//2], path)
 					
 					if ((epoch+1+resume_epoch) % CONFIG.save_interval) == 0:
@@ -133,7 +133,7 @@ class MIFF:
 						lrimg = np.pad(lrimg, ((64, 64), (64, 64)), constant_values=(255.0))
 						opimg = cast_uint8(fake_patchs[i].numpy())
 						combine_imgs = np.concatenate((lrimg[:,:,np.newaxis], out_bicu[i], opimg, hr_patchs[i]), axis = 1)
-						path = 'Training_Output/id_{}_gan_{}_train_{}.png'.format(i+1, CONFIG.gen_model, epoch+1+resume_epoch)
+						path = 'Training_outputs/id_{}_gan_{}_train_{}.png'.format(i+1, CONFIG.gen_model, epoch+1+resume_epoch)
 						tl.vis.save_image(combine_imgs,path)
 
 				  
@@ -170,7 +170,7 @@ class MIFF:
 				lrimg = np.pad(lrimg_list[i], ((64, 64), (64, 64),(0,0)), constant_values=(255.0))
 
 				combine_imgs= np.concatenate((lrimg[:,:,np.newaxis], bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
-				path = 'Validation_Output/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
+				path = 'Validation_outputs/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
 				tl.vis.save_images(combine_imgs, path)
             
 			print(np.stack((model_psnr, bicubic_psnr), axis=-1))
