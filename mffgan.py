@@ -1,4 +1,4 @@
-from utils import  get_train_dataset, get_validation_data, generate_bicubic_samples, PSNR, SSIM, cast_uint8
+from utils import  get_train_dataset, generate_bicubic_samples, PSNR, SSIM, cast_uint8
 from model_list import get_model
 import warnings
 warnings.filterwarnings('ignore',category=FutureWarning)
