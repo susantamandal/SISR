@@ -23,7 +23,6 @@ flags.DEFINE_integer('save_interval', 0, 'Save model interval')
 flags.DEFINE_string('dir_train_in', 'Training_inputs', 'Input folder for training')
 flags.DEFINE_string('dir_val_in', 'Validation/Test', 'Input folder for Validation')
 flags.DEFINE_string('dir_val_target', 'Validation/Target', 'Target folder for Validation')
-flags.DEFINE_string('dir_input_eval', 'Evaluation/Input', 'Evaluate folder for HR images')
 CONFIG=flags.FLAGS
 
 def main(args):
