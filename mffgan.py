@@ -152,12 +152,7 @@ class MIFF:
 		elif CONFIG.mode==2:	## Validation
 
 			model = get_model('G', CONFIG.gen_model)
-            
-			if CONFIG.gan_train:
-				model.load_weights('Checkpoints_MIFFGAN/MIFFGAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
-			else:
-				model.load_weights('Checkpoints_MIFF/MIFF_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
-
+			model.load_weights('Checkpoints_MIFFGAN/MIFFGAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
 			model.eval()  ## disable dropout, batch norm moving avg ...
 
 			save_time = time.time()
@@ -169,6 +164,8 @@ class MIFF:
 			hrimg_file_list.sort(key=tl.files.natural_keys)
 			lrimg_list = np.array(tl.vis.read_images(lrimg_file_list, path=CONFIG.dir_val_in, n_threads=32))
 			hrimg_list = np.array(tl.vis.read_images(hrimg_file_list, path=CONFIG.dir_val_target, n_threads=32)) 
+			
+			
 			lrimg_list = lrimg_list[:,:,:,np.newaxis]
 			hrimg_list = hrimg_list[:,:,:,np.newaxis]
 
@@ -183,13 +180,9 @@ class MIFF:
 				name= lrimg_file_list[i].split('/')[-1].split('.')[0]
 				lrimg = np.pad(lrimg_list[i], ((64, 64), (64, 64),(0,0)), constant_values=(255.0))
 
-				#combine_imgs= np.concatenate((lrimg[:,:,np.newaxis], bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
-				if CONFIG.gan_train:
-					path = 'Validation/Val_MIFFGAN/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
-				else:
-					path = 'Validation/Val_MIFF/{}_mf_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
-                
-				tl.vis.save_image(opimg_list[i], path)
+				combine_imgs= np.concatenate((lrimg[:,:,np.newaxis], bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
+				path = 'Validation/Val_MIFFGAN/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
+				tl.vis.save_images(combine_imgs, path)
             
 			print(np.stack((model_psnr, bicubic_psnr), axis=-1))
 			print(np.stack((model_ssim, bicubic_ssim), axis=-1))
