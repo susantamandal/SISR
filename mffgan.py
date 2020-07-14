@@ -30,21 +30,17 @@ class MIFF:
 			decay_every = int(n_epoch/ 2)
 			lr_decay = 0.1
 			resume_epoch = 0
-			stats=[['MPSNR','BPSNR','MSSIM','BSSIM','Model','EPOCH']]
-			bi_psnr = []
-			mo_psnr = []
-			bi_ssim = []
-			mo_ssim = []
+			 
 			if CONFIG.load_weights:
 			
 				resume_epoch = CONFIG.model_epoch
 			
 				if CONFIG.gan_init:
-					gen_model.load_weights('Checkpoints_MIFFGAN/MIFFGAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
+					gen_model.load_weights('Checkpoints/GAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
 					resume_epoch = 0
 				else:	
-					gen_model.load_weights('Checkpoints_MIFFGAN/MIFFGAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
-					dis_model.load_weights('Checkpoints_MIFFGAN/MIFFDIS_{}_GAN_{}_EPID_{}.h5'.format(CONFIG.dis_model, CONFIG.gen_model, CONFIG.model_epoch))
+					gen_model.load_weights('Checkpoints/GAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
+					dis_model.load_weights('Checkpoints/DIS_{}_GAN_{}_EPID_{}.h5'.format(CONFIG.dis_model, CONFIG.gen_model, CONFIG.model_epoch))
 				
 		
 			g_optimizer_init = tf2.optimizers.Adam(lr_v, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
@@ -75,13 +71,13 @@ class MIFF:
 						print("Epoch: [{}/{}] step: [{}/{}] time: {:.3f}s, mse: {:.6f} ".format(
 						epoch+1+resume_epoch, resume_epoch+n_epoch_init, step+1, CONFIG.no_of_batches, time.time() - step_time, mse_loss))
 					
-					path = 'Training_MIFFGAN/gan_init_{}_train_{}.png'.format(CONFIG.gen_model, epoch+1+resume_epoch)
+					path = 'Training_Output/gan_init_{}_train_{}.png'.format(CONFIG.gen_model, epoch+1+resume_epoch)
 					tl.vis.save_images(cast_uint8(fake_patchs.numpy()), [2, CONFIG.batch_size//2], path)
 					
 					if ((epoch+1+resume_epoch) % CONFIG.save_interval) == 0:
-						gen_model.save_weights('Checkpoints_MIFFGAN/MIFFGAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
+						gen_model.save_weights('Checkpoints/GAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
 				
-				gen_model.save_weights('Checkpoints_MIFFGAN/MIFFGAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, n_epoch_init + resume_epoch))
+				gen_model.save_weights('Checkpoints/GAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, n_epoch_init + resume_epoch))
 			
 			
 			
@@ -129,35 +125,28 @@ class MIFF:
 					print(log)
 
 				if (epoch+1+resume_epoch)%  CONFIG.save_interval == 0:
-					gen_model.save_weights('Checkpoints_MIFFGAN/MIFFGAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
-					dis_model.save_weights('Checkpoints_MIFFGAN/MIFFDIS_{}_GAN_{}_EPID_{}.h5'.format(CONFIG.dis_model, CONFIG.gen_model, epoch+1+resume_epoch))
+					gen_model.save_weights('Checkpoints/GAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
+					dis_model.save_weights('Checkpoints/DIS_{}_GAN_{}_EPID_{}.h5'.format(CONFIG.dis_model, CONFIG.gen_model, epoch+1+resume_epoch))
 					print("Save time: {}".format(time.asctime( time.localtime(time.time()))))
 					for i in range(CONFIG.batch_size):
 						lrimg = np.squeeze(lr_patchs[i], axis =-1)
 						lrimg = np.pad(lrimg, ((64, 64), (64, 64)), constant_values=(255.0))
 						opimg = cast_uint8(fake_patchs[i].numpy())
 						combine_imgs = np.concatenate((lrimg[:,:,np.newaxis], out_bicu[i], opimg, hr_patchs[i]), axis = 1)
-						path = 'Training_MIFFGAN/id_{}_gan_{}_train_{}.png'.format(i+1, CONFIG.gen_model, epoch+1+resume_epoch)
+						path = 'Training_Output/id_{}_gan_{}_train_{}.png'.format(i+1, CONFIG.gen_model, epoch+1+resume_epoch)
 						tl.vis.save_image(combine_imgs,path)
-						path = 'Training_MIFFGAN/gn_{}_ep_{}_id_{}_'.format(CONFIG.gen_model, epoch+1+resume_epoch, i+1)
-						tl.vis.save_image(lrimg[:,:,np.newaxis],path+'lr.png')
-						tl.vis.save_image(hr_patchs[i],path+'hr.png')
-						tl.vis.save_image(out_bicu[i],path+'bc.png')
-						r= np.amin(lrimg)-np.amin(opimg)
-						np.add(opimg,r)
-						tl.vis.save_image(opimg, path+'op.png')
 
 				  
 
 		elif CONFIG.mode==2:	## Validation
 
 			model = get_model('G', CONFIG.gen_model)
-			model.load_weights('Checkpoints_MIFFGAN/MIFFGAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
+			model.load_weights('Checkpoints/GAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, CONFIG.model_epoch))
 			model.eval()  ## disable dropout, batch norm moving avg ...
 
 			save_time = time.time()
 			
-			## Reading Valiiation dataset
+			## Reading Validation dataset
 			lrimg_file_list = tl.files.load_file_list(path=CONFIG.dir_val_in, regx='.*.png', printable=False)
 			hrimg_file_list = tl.files.load_file_list(path=CONFIG.dir_val_target, regx='.*.png', printable=False)
 			lrimg_file_list.sort(key=tl.files.natural_keys)
@@ -181,7 +170,7 @@ class MIFF:
 				lrimg = np.pad(lrimg_list[i], ((64, 64), (64, 64),(0,0)), constant_values=(255.0))
 
 				combine_imgs= np.concatenate((lrimg[:,:,np.newaxis], bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
-				path = 'Validation/Val_MIFFGAN/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
+				path = 'Validation_Output/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
 				tl.vis.save_images(combine_imgs, path)
             
 			print(np.stack((model_psnr, bicubic_psnr), axis=-1))
