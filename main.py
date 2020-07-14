@@ -7,9 +7,8 @@ import tensorflow.compat.v1 as tf1
 
 flags = tf1.app.flags
 
-flags.DEFINE_integer('mode', 1, '1 for Training/ 2 for Validation/ 3 for Evaluation')
+flags.DEFINE_integer('mode', 1, '1 for Training/ 2 for Validation')
 flags.DEFINE_boolean('load_weights', False, 'Resume training with load weights')
-flags.DEFINE_boolean('gan_train', False, 'GAN training')
 flags.DEFINE_boolean('gan_init', False, 'GAN training with/without initial training')
 flags.DEFINE_integer('gen_model', 0, 'Generator model number')
 flags.DEFINE_integer('dis_model', 0, 'Discreminator model number')
