@@ -21,8 +21,8 @@ flags.DEFINE_integer('save_interval', 0, 'Save model interval')
 flags.DEFINE_integer('size', 128, 'LR size')
 flags.DEFINE_integer('scale', 4, 'scaling factor')
 flags.DEFINE_string('dir_train_in', 'Training_inputs', 'Input folder for training')
-flags.DEFINE_string('dir_val_in', 'Validation_test', 'Input folder for Validation')
-flags.DEFINE_string('dir_val_target', 'Validation_target', 'Target folder for Validation')
+flags.DEFINE_string('dir_val_in', 'Validation_inputs/Test', 'Input folder for Validation')
+flags.DEFINE_string('dir_val_target', 'Validation_inputs/Target', 'Target folder for Validation')
 CONFIG=flags.FLAGS
 
 def main(args):
