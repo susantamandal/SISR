@@ -143,7 +143,7 @@ def model_D1():	##Phase1 Discriminator
 
 
 
-def model_D1():	##Phase2 Discriminator
+def model_D2():	##Phase2 Discriminator
 
 	w_init = tf1.random_normal_initializer(stddev=0.02)
 	gamma_init = tf1.random_normal_initializer(1., 0.02)
