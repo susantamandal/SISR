@@ -11,7 +11,7 @@ import tensorflow as tf2
 import tensorflow.compat.v1 as tf1
 from tensorlayer.models import Model
 
-class MIFF:
+class mffgan:
 	
 	def __init__(self, CONFIG):
 
@@ -63,8 +63,10 @@ class MIFF:
 							break
 						step_time = time.time()
 						with tf1.GradientTape() as tape:
-							out_bicu = generate_bicubic_samples(lr_patchs.numpy())
+							out_bicu = generate_bicubic_samples(lr_patchs.numpy(), CONFIG)
+							#print( lr_patchs.shape, out_bicu.shape)
 							fake_patchs = gen_model([lr_patchs, out_bicu])
+							
 							mse_loss = tl.cost.mean_squared_error(fake_patchs, hr_patchs, is_mean=True)
 						grad = tape.gradient(mse_loss, gen_model.trainable_weights)
 						g_optimizer_init.apply_gradients(zip(grad, gen_model.trainable_weights))
@@ -72,7 +74,7 @@ class MIFF:
 						epoch+1+resume_epoch, resume_epoch+n_epoch_init, step+1, CONFIG.no_of_batches, time.time() - step_time, mse_loss))
 					
 					path = 'Training_outputs/gan_init_{}_train_{}.png'.format(CONFIG.gen_model, epoch+1+resume_epoch)
-					tl.vis.save_images(cast_uint8(fake_patchs.numpy()), [2, CONFIG.batch_size//2], path)
+					tl.vis.save_images(fake_patchs.numpy(), [2, CONFIG.batch_size//2], path)
 					
 					if ((epoch+1+resume_epoch) % CONFIG.save_interval) == 0:
 						gen_model.save_weights('Checkpoints/GAN_INIT_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
@@ -91,7 +93,9 @@ class MIFF:
 					step_time = time.time()
 					with tf1.GradientTape(persistent=True) as tape:
 		      
-						out_bicu = generate_bicubic_samples(np.squeeze(lr_patchs,axis=3))
+						#out_bicu = generate_bicubic_samples(np.squeeze(lr_patchs,axis=3), CONFIG.scale)
+						out_bicu = generate_bicubic_samples(lr_patchs.numpy(), CONFIG)
+						#print( lr_patchs.shape, out_bicu.shape)
 						fake_patchs = gen_model([lr_patchs, out_bicu])
 
 						logits_fake = dis_model(fake_patchs)
@@ -118,23 +122,34 @@ class MIFF:
 					epoch+1+resume_epoch, resume_epoch + n_epoch, step+1, CONFIG.no_of_batches, time.time() - step_time, mse_loss, vgg_loss, g_gan_loss, d_loss))
 					
 				# update the learning rate
-				if (epoch+resume_epoch) % decay_every == 0:
+				'''if (epoch+resume_epoch) % decay_every == 0:
 					new_lr_decay = lr_decay**((epoch+resume_epoch)// decay_every)
 					lr_v.assign(lr_init * new_lr_decay)
 					log = " ** new learning rate: %f (for GAN)" % (lr_init * new_lr_decay)
 					print(log)
-
+                		'''
 				if (epoch+1+resume_epoch)%  CONFIG.save_interval == 0:
 					gen_model.save_weights('Checkpoints/GAN_{}_EPID_{}.h5'.format(CONFIG.gen_model, epoch+1+resume_epoch))
 					dis_model.save_weights('Checkpoints/DIS_{}_GAN_{}_EPID_{}.h5'.format(CONFIG.dis_model, CONFIG.gen_model, epoch+1+resume_epoch))
-					print("Save time: {}".format(time.asctime( time.localtime(time.time()))))
+					print("Save time: {}content".format(time.asctime( time.localtime(time.time()))))
 					for i in range(CONFIG.batch_size):
-						lrimg = np.squeeze(lr_patchs[i], axis =-1)
-						lrimg = np.pad(lrimg, ((64, 64), (64, 64)), constant_values=(255.0))
-						opimg = cast_uint8(fake_patchs[i].numpy())
-						combine_imgs = np.concatenate((lrimg[:,:,np.newaxis], out_bicu[i], opimg, hr_patchs[i]), axis = 1)
+						if CONFIG.gen_model==1:
+							lrimg = np.squeeze(lr_patchs[i], axis =-1)
+							lrimg = np.pad(lrimg, ((64, 64), (64, 64)), constant_values=(255.0))
+							#opimg = cast_uint8(fake_patchs[i].numpy())
+							opimg = fake_patchs[i].numpy()
+							combine_imgs = np.concatenate((lrimg[:,:,np.newaxis], out_bicu[i], opimg, hr_patchs[i]), axis = 1)
+						else:
+							lrimg = np.pad(lr_patchs[i], ((192, 192), (192, 192), (0, 0)), constant_values=(255.0))
+							#opimg = cast_uint8(fake_patchs[i].numpy())
+							opimg = fake_patchs[i].numpy()
+							combine_imgs = np.concatenate((lrimg, out_bicu[i], opimg, hr_patchs[i]), axis = 1)
 						path = 'Training_outputs/id_{}_gan_{}_train_{}.png'.format(i+1, CONFIG.gen_model, epoch+1+resume_epoch)
 						tl.vis.save_image(combine_imgs,path)
+
+			gen_model.save_weights('Checkpoints/GAN_{}_FINAL.h5'.format(CONFIG.gen_model))
+			dis_model.save_weights('Checkpoints/DIS_{}_GAN_{}_FINAL.h5'.format(CONFIG.dis_model, CONFIG.gen_model))
+					
 
 				  
 
@@ -154,11 +169,11 @@ class MIFF:
 			lrimg_list = np.array(tl.vis.read_images(lrimg_file_list, path=CONFIG.dir_val_in, n_threads=32))
 			hrimg_list = np.array(tl.vis.read_images(hrimg_file_list, path=CONFIG.dir_val_target, n_threads=32)) 
 			
-			
-			lrimg_list = lrimg_list[:,:,:,np.newaxis]
-			hrimg_list = hrimg_list[:,:,:,np.newaxis]
+			if CONFIG.gen_model==1:
+				lrimg_list = lrimg_list[:,:,:,np.newaxis] 
+				hrimg_list = hrimg_list[:,:,:,np.newaxis]
 
-			bcimg_list = generate_bicubic_samples(lrimg_list)
+			bcimg_list = generate_bicubic_samples(lrimg_list,CONFIG)
 			opimg_list = model([tf1.cast(lrimg_list,tf1.float32), tf1.cast(bcimg_list,tf1.float32)]) 
 			opimg_list = opimg_list.numpy()
 
@@ -167,11 +182,14 @@ class MIFF:
 			
 			for i in range(lrimg_list.shape[0]):
 				name= lrimg_file_list[i].split('/')[-1].split('.')[0]
-				lrimg = np.pad(lrimg_list[i], ((64, 64), (64, 64),(0,0)), constant_values=(255.0))
+				if CONFIG.gen_model==1:
+					lrimg = np.pad(lrimg_list[i], ((64, 64), (64, 64),(0, 0)), constant_values=(255.0))
+				else:
+					lrimg = np.pad(lrimg_list[i], ((192, 192), (192, 192), (0, 0)), constant_values=(255.0))
+				combine_imgs = np.concatenate((lrimg, bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
 
-				combine_imgs= np.concatenate((lrimg[:,:,np.newaxis], bcimg_list[i], opimg_list[i], hrimg_list[i]), axis = 1)
 				path = 'Validation_outputs/{}_gan_{}_val_{}.png'.format(name, CONFIG.gen_model, CONFIG.model_epoch)
-				tl.vis.save_images(combine_imgs, path)
+				tl.vis.save_image(combine_imgs, path)
             
 			print(np.stack((model_psnr, bicubic_psnr), axis=-1))
 			print(np.stack((model_ssim, bicubic_ssim), axis=-1))
@@ -181,10 +199,3 @@ class MIFF:
 			print('SUM(SSIM DIFF): {}'.format(np.sum(np.subtract(model_ssim, bicubic_ssim))))
 			print('AVG MODEL SSIM: {}, AVG BICUBIC SSIM: {}'.format(np.sum(model_ssim)/lrimg_list.shape[0], np.sum(bicubic_ssim)/lrimg_list.shape[0]))
 			print((time.time()-save_time)/10)
-			
-			 
-			 
-
-
-
-		 

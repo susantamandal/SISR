@@ -1,4 +1,4 @@
-from miff import MIFF
+from mffgan import mffgan
 import warnings
 warnings.filterwarnings('ignore',category=FutureWarning)
 import tensorlayer as tl
@@ -18,13 +18,14 @@ flags.DEFINE_integer('total_epoch', 0, 'Total training epoch')
 flags.DEFINE_integer('batch_size', 0, 'Batch_size')
 flags.DEFINE_integer('no_of_batches', 0, 'Number of batches')
 flags.DEFINE_integer('save_interval', 0, 'Save model interval')
-
+flags.DEFINE_integer('size', 128, 'LR size')
+flags.DEFINE_integer('scale', 4, 'scaling factor')
 flags.DEFINE_string('dir_train_in', 'Training_inputs', 'Input folder for training')
 flags.DEFINE_string('dir_val_in', 'Validation_test', 'Input folder for Validation')
-flags.DEFINE_string('dir_val_target', 'Validation_outputs', 'Target folder for Validation')
+flags.DEFINE_string('dir_val_target', 'Validation_target', 'Target folder for Validation')
 CONFIG=flags.FLAGS
 
 def main(args):
-		MIFF(CONFIG)
+		mffgan(CONFIG)
 if __name__ == '__main__':
     tf1.app.run()

@@ -47,7 +47,7 @@ def model_G1():	##Phase1 Generator
 	non_linearity_layer_3 = Elementwise(combine_fn=tf1.add )([non_linearity_layer_2, merge_layer]) # Shape(1,256,256,128)
 
 	## 	Reconstruction layers
-	Recon_layer_1 = Conv2d(1, (5, 5), (1, 1), act=fn, padding='SAME', W_init=w_init )(residual_block_2) # Shape(1,256,256,1)
+	Recon_layer_1 = Conv2d(1, (5, 5), (1, 1), act=fn, padding='SAME', W_init=w_init )(non_linearity_layer_3) # Shape(1,256,256,1)
 	Recon_layer_1 = BatchNorm2d(gamma_init=gamma_init)(Recon_layer_1)
 	
 	Recon_layer_2 = Elementwise(combine_fn=tf1.add )([Recon_layer_1, hr_image]) # Shape(1,256,256,1)

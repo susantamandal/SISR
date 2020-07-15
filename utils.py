@@ -17,8 +17,8 @@ def get_train_dataset(CONFIG):
 	def mappings(img_path):
 		img = tf1.io.read_file(img_path)
 		img = tf1.image.decode_png(img)
-		lrimg = tf2.image.resize_with_pad(img, 128, 128, antialias=True)
-		hrimg = tf2.image.resize_with_pad (img, 256, 256, antialias=True)
+		lrimg = tf2.image.resize_with_pad(img, CONFIG.size, CONFIG.size, antialias=True)
+		hrimg = tf2.image.resize_with_pad (img, CONFIG.size*CONFIG.scale, CONFIG.size*CONFIG.scale, antialias=True)
 		return lrimg, hrimg	
 	dataset = file_list.map(mappings)
 	dataset = dataset.shuffle(50)	#shuffle_buffer_size=128
@@ -43,14 +43,10 @@ def get_train_dataset(CONFIG):
 	#	print(step, lrimg.shape)
 	return dataset
 '''    
-def generate_bicubic_samples(lrimg_list):
-	#print(type(lrimg_list),lrimg_list.shape)
-	#lrimg_list=lrimg_list.numpy()
-	#print(type(lrimg_list),lrimg_list.shape)
-	desired_size = (2*lrimg_list.shape[1],2*lrimg_list.shape[2])
-	bcimg_list = np.array([cv.resize(lrimg_list[i], desired_size,interpolation = cv.INTER_CUBIC) for i in range(lrimg_list.shape[0]) ] )
-	#print(type(bcimg_list),bcimg_list.shape)	
-	return bcimg_list[:,:,:,np.newaxis] 
+def generate_bicubic_samples(lrimg_list, CONFIG):
+	desired_size = (CONFIG.scale*lrimg_list.shape[1],CONFIG.scale*lrimg_list.shape[2])
+	bcimg_list = np.array([cv.resize(lrimg_list[i], desired_size, interpolation = cv.INTER_CUBIC) for i in range(lrimg_list.shape[0]) ] )
+	return bcimg_list[:,:,:,np.newaxis] if CONFIG.gen_model==1 else bcimg_list
   
 def PSNR(hrimg_list, bcimg_list, opimg_list):
 
@@ -77,7 +73,7 @@ def SSIM(hrimg_list, bcimg_list, opimg_list):
 
 def cast_uint8(img):
 	img = img/np.amax(img)
-	img = (img * 255).astype(np.uint8)
+	img = (img * 255).round().astype(np.uint8)
 	return img
 
 
@@ -111,7 +107,7 @@ def copy_images(string):
 		tl.vis.save_image(np.array(img_list[i]), img_path)
 		#print('Copy:'+argv[0]+'/'+img_file_list[i]+' To:'+argv[1])
 	print('Copy successful!')
-
+'''
 def makedataset(string):
 	argv=string.split(" ")
 	if not (tl.files.folder_exists(argv[0]) and tl.files.folder_exists(argv[1])) :
@@ -128,6 +124,9 @@ def makedataset(string):
 		tl.vis.save_image(img_list[i], img_path)
 	#print('Copy:'+argv[0]+'/'+img_file_list[i]+' To:'+argv[1])
 	print('Conversion successful!')
+'''
 
 if __name__ == '__main__':
 	eval(sys.argv[1]+'("'+sys.argv[2]+'")')
+	
+	 
